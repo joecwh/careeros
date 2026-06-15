@@ -215,6 +215,9 @@ label{font-size:12.5px;font-weight:600;color:var(--text);display:block;margin-bo
   .modal::before{content:'';display:block;width:36px;height:4px;border-radius:99px;background:var(--border);margin:8px auto 0;}
   /* Hero — keep search bar comfortable on mobile */
   #js-search{font-size:14px;}
+  /* Kanban — horizontal snap-scroll on mobile */
+  .kanban{display:flex!important;overflow-x:auto;gap:10px;padding-bottom:10px;scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch;}
+  .kan-col{flex:0 0 80%;scroll-snap-align:start;}
 }
 
 /* Small mobile (≤480px) */
@@ -224,6 +227,29 @@ label{font-size:12.5px;font-weight:600;color:var(--text);display:block;margin-bo
 }
 
 @keyframes slideUp{from{transform:translateY(8%);opacity:.6;}to{transform:translateY(0);opacity:1;}}
+
+/* ── Softer restyle (CareerOS-inspired friendlier look) ── */
+.card{border-radius:16px;}
+.stat-c{border-radius:14px;}
+.btn-p,.btn-o,.btn-ghost{border-radius:11px;}
+.chip{border-radius:7px;}
+
+/* ── Kanban application board ── */
+.kanban{display:grid;grid-template-columns:repeat(5,minmax(210px,1fr));gap:12px;align-items:start;overflow-x:auto;padding-bottom:6px;}
+.kan-col{background:var(--bg3);border-radius:16px;padding:11px 10px 13px;transition:background .15s ease,box-shadow .15s ease;}
+.kan-col.drag-over{background:var(--accent-l);box-shadow:inset 0 0 0 2px var(--accent-m);}
+.kan-col-head{display:flex;align-items:center;gap:7px;padding:5px 6px 11px;}
+.kan-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0;}
+.kan-col-title{font-size:12.5px;font-weight:700;color:var(--text);letter-spacing:-.01em;}
+.kan-count{margin-left:auto;font-size:11px;font-weight:700;color:var(--text2);background:var(--bg2);border:1px solid var(--border);border-radius:99px;min-width:21px;height:21px;display:inline-flex;align-items:center;justify-content:center;padding:0 6px;}
+.kan-cards{display:flex;flex-direction:column;gap:9px;min-height:44px;}
+.kan-card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:14px;cursor:grab;box-shadow:var(--card-shadow);transition:box-shadow .15s ease,transform .12s ease,border-color .15s ease;}
+.kan-card:hover{box-shadow:var(--card-shadow-md);border-color:#CBD5E1;transform:translateY(-1px);}
+.kan-card:active{cursor:grabbing;}
+.kan-card.dragging{opacity:.45;transform:rotate(2deg) scale(.98);}
+.kan-empty{font-size:11.5px;color:var(--text3);text-align:center;padding:16px 8px;border:1.5px dashed var(--border);border-radius:11px;}
+.kan-add{width:100%;margin-top:9px;background:transparent;border:1px dashed var(--border);border-radius:11px;padding:8px;font-size:12px;font-weight:600;color:var(--text2);cursor:pointer;display:flex;align-items:center;justify-content:center;gap:5px;transition:background .15s ease,border-color .15s ease,color .15s ease;}
+.kan-add:hover{background:var(--bg2);border-color:var(--accent);color:var(--accent);}
 
 /* salary range slider */
 .range-wrap{position:relative;height:32px;display:flex;align-items:center;}
@@ -625,6 +651,44 @@ label{font-size:12.5px;font-weight:600;color:var(--text);display:block;margin-bo
 <div class="modal-bg" id="app-modal" style="display:none;">
   <div class="modal" style="max-width:560px;padding:0;overflow:hidden;">
     <div id="app-modal-content"></div>
+  </div>
+</div>
+
+<!-- ══ ADD APPLICATION MODAL ══ -->
+<div class="modal-bg" id="addapp-modal" style="display:none;">
+  <div class="modal" style="max-width:440px;padding:0;overflow:hidden;">
+    <div style="padding:20px 24px 14px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:start;gap:10px;">
+      <div>
+        <h3 class="fd" style="font-size:17px;font-weight:800;color:var(--text);letter-spacing:-.01em;">Add application</h3>
+        <p style="font-size:12.5px;color:var(--text2);margin-top:3px;">Track a role you applied to outside CareerOS. Adding to <strong id="addapp-stage-label" style="color:var(--accent);">Applied</strong>.</p>
+      </div>
+      <button onclick="closeAddApp()" style="background:var(--bg3);border:none;cursor:pointer;width:32px;height:32px;border-radius:8px;color:var(--text2);font-size:18px;line-height:1;flex-shrink:0;">×</button>
+    </div>
+    <div style="padding:18px 24px;display:flex;flex-direction:column;gap:13px;">
+      <div>
+        <label style="display:block;font-size:12px;font-weight:600;color:var(--text);margin-bottom:6px;">Role / job title</label>
+        <input id="addapp-role" type="text" placeholder="e.g. Software Engineer"/>
+      </div>
+      <div>
+        <label style="display:block;font-size:12px;font-weight:600;color:var(--text);margin-bottom:6px;">Company</label>
+        <input id="addapp-company" type="text" placeholder="e.g. Maybank" list="addapp-company-list"/>
+        <datalist id="addapp-company-list"></datalist>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+        <div>
+          <label style="display:block;font-size:12px;font-weight:600;color:var(--text);margin-bottom:6px;">Location</label>
+          <input id="addapp-loc" type="text" placeholder="e.g. Kuala Lumpur"/>
+        </div>
+        <div>
+          <label style="display:block;font-size:12px;font-weight:600;color:var(--text);margin-bottom:6px;">Salary <span style="color:var(--text3);font-weight:400;">(optional)</span></label>
+          <input id="addapp-salary" type="text" placeholder="e.g. RM 6,000"/>
+        </div>
+      </div>
+    </div>
+    <div style="padding:14px 24px 20px;border-top:1px solid var(--border);display:flex;gap:10px;">
+      <button class="btn-ghost" style="flex:1;" onclick="closeAddApp()">Cancel</button>
+      <button class="btn-p" style="flex:1;" onclick="submitAddApp()">Add to board</button>
+    </div>
   </div>
 </div>
 
@@ -1082,15 +1146,19 @@ label{font-size:12.5px;font-weight:600;color:var(--text);display:block;margin-bo
 
     <!-- Job Applications -->
     <div id="ct-capps" style="display:none;" class="portal-content">
-      <h2 class="pg-title">My Applications</h2>
-      <p class="pg-desc" style="margin-bottom:20px;">Track the status of every role you've applied to.</p>
-      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:18px;" class="stats-g">
-        <div class="stat-c"><div style="font-size:11px;color:var(--text2);margin-bottom:4px;">Submitted</div><div class="fd" style="font-size:22px;font-weight:700;color:var(--text);">7</div></div>
-        <div class="stat-c"><div style="font-size:11px;color:var(--text2);margin-bottom:4px;">Under Review</div><div class="fd" style="font-size:22px;font-weight:700;color:var(--text);">3</div></div>
-        <div class="stat-c"><div style="font-size:11px;color:var(--text2);margin-bottom:4px;">Interview</div><div class="fd" style="font-size:22px;font-weight:700;color:var(--accent);">2</div></div>
-        <div class="stat-c"><div style="font-size:11px;color:var(--text2);margin-bottom:4px;">Offers</div><div class="fd" style="font-size:22px;font-weight:700;color:var(--accent);">1</div></div>
+      <div class="pg-header">
+        <div>
+          <h2 class="pg-title">My Applications</h2>
+          <p class="pg-desc">Drag any card across the pipeline to update its stage — or tap a card to view the full timeline.</p>
+        </div>
       </div>
-      <div class="card"><div style="overflow-x:auto;"><table style="width:100%;border-collapse:collapse;font-size:13px;"><thead><tr style="border-bottom:2px solid var(--border);"><th style="text-align:left;padding:10px 8px;color:var(--text2);font-weight:500;">Role</th><th style="text-align:left;padding:10px 8px;color:var(--text2);font-weight:500;">Company</th><th style="text-align:left;padding:10px 8px;color:var(--text2);font-weight:500;">Applied</th><th style="text-align:left;padding:10px 8px;color:var(--text2);font-weight:500;">Status</th><th style="text-align:left;padding:10px 8px;color:var(--text2);font-weight:500;">Last Update</th><th style="text-align:left;padding:10px 8px;color:var(--text2);font-weight:500;"></th></tr></thead><tbody id="capps-tbody"></tbody></table></div></div>
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px;" class="stats-g">
+        <div class="stat-c"><div style="font-size:11px;color:var(--text2);margin-bottom:4px;">Applied</div><div class="fd" id="apst-submitted" style="font-size:22px;font-weight:700;color:var(--text);">0</div></div>
+        <div class="stat-c"><div style="font-size:11px;color:var(--text2);margin-bottom:4px;">Under Review</div><div class="fd" id="apst-review" style="font-size:22px;font-weight:700;color:var(--text);">0</div></div>
+        <div class="stat-c"><div style="font-size:11px;color:var(--text2);margin-bottom:4px;">Interview</div><div class="fd" id="apst-interview" style="font-size:22px;font-weight:700;color:var(--accent);">0</div></div>
+        <div class="stat-c"><div style="font-size:11px;color:var(--text2);margin-bottom:4px;">Offers</div><div class="fd" id="apst-offer" style="font-size:22px;font-weight:700;color:var(--accent);">0</div></div>
+      </div>
+      <div class="kanban" id="capps-board"></div>
     </div>
     <!-- Post a Gig -->
     <div id="ct-cpostjob" style="display:none;" class="portal-content">
@@ -4695,10 +4763,141 @@ const applications=[
       {date:'09 Jun 2026',event:'Application unsuccessful — position filled',done:true,highlight:true},
     ],
     notes:'Feedback: A stronger candidate with prior central-bank experience was selected. Consider applying to the 2027 cohort.'},
+  {id:'A006',role:'Cloud Consultant',company:'EY Malaysia',loc:'KL Sentral',salary:'RM 8,000–11,000/mo',applied:'14 May 2026',status:'Interview',sc:'b-teal',update:'3 days ago',
+    timeline:[
+      {date:'14 May 2026',event:'Application submitted',done:true},
+      {date:'16 May 2026',event:'Shortlisted by hiring manager',done:true},
+      {date:'23 May 2026',event:'Case interview scheduled — 27 May, 10:00 AM',done:true,highlight:true},
+      {date:'TBD',event:'Partner round',done:false},
+    ],
+    notes:'Case study round — prepare a digital transformation scenario for a Malaysian retailer. Issue trees recommended.'},
+  {id:'A007',role:'Backend Engineer',company:'CIMB Group',loc:'Petaling Jaya',salary:'RM 7,000–9,000/mo',applied:'11 May 2026',status:'Under Review',sc:'b-navy',update:'6 days ago',
+    timeline:[
+      {date:'11 May 2026',event:'Application submitted',done:true},
+      {date:'13 May 2026',event:'HackerRank assessment completed',done:true,highlight:true},
+      {date:'TBD',event:'Technical rounds',done:false},
+    ],
+    notes:'Assessment scored 82%. Awaiting the engineering panel to schedule the first technical round.'},
+  {id:'A008',role:'Process Engineer',company:'Petronas',loc:'Kuala Lumpur',salary:'RM 6,500–8,500/mo',applied:'07 May 2026',status:'Submitted',sc:'b-navy',update:'1 week ago',
+    timeline:[
+      {date:'07 May 2026',event:'Application submitted',done:true,highlight:true},
+      {date:'TBD',event:'Awaiting online assessment invite',done:false},
+    ],
+    notes:'Graduate intake cycle. Average first response time for this employer is 3–6 weeks.'},
+  {id:'A009',role:'Junior Developer',company:'Maybank',loc:'Kuala Lumpur',salary:'RM 5,000–6,500/mo',applied:'05 May 2026',status:'Submitted',sc:'b-navy',update:'1 week ago',
+    timeline:[
+      {date:'05 May 2026',event:'Application submitted',done:true,highlight:true},
+      {date:'TBD',event:'Awaiting recruiter review',done:false},
+    ],
+    notes:'No updates yet. This role is part of the Maybank GO Ahead graduate track.'},
 ];
+// ── Kanban pipeline board ──
+const KANBAN_COLS=[
+  {key:'Submitted',   label:'Applied',      dot:'#94A3B8'},
+  {key:'Under Review',label:'Under Review', dot:'#0A1828'},
+  {key:'Interview',   label:'Interview',    dot:'#028090'},
+  {key:'Offer',       label:'Offer',        dot:'#10B981'},
+  {key:'Rejected',    label:'Closed',       dot:'#EF4444'},
+];
+const KAN_SC={'Submitted':'b-navy','Under Review':'b-navy','Interview':'b-teal','Offer':'b-green','Rejected':'b-red'};
+let kanDragId=null;
+
+function kanCardHTML(a){
+  const logo=logos[a.company];
+  const logoEl=logo
+    ?`<img src="${logo}" width="36" height="36" style="border-radius:9px;flex-shrink:0;box-shadow:0 1px 2px rgba(0,0,0,.08);" alt="${a.company}"/>`
+    :`<div style="width:36px;height:36px;border-radius:9px;background:var(--bg3);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:var(--text2);flex-shrink:0;">${a.company.slice(0,2).toUpperCase()}</div>`;
+  return `<div class="kan-card" draggable="true" ondragstart="kanDragStart(event,'${a.id}')" ondragend="kanDragEnd(event)" onclick="openAppDetail('${a.id}')">
+    <div style="display:flex;gap:10px;align-items:flex-start;margin-bottom:12px;">
+      ${logoEl}
+      <div style="min-width:0;flex:1;">
+        <div style="font-size:14px;font-weight:700;color:var(--text);line-height:1.3;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;">${a.role}</div>
+        <div style="font-size:12px;color:var(--text2);margin-top:2px;line-height:1.35;">${a.company} · ${a.loc}</div>
+      </div>
+    </div>
+    <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+      <span style="font-size:11.5px;font-weight:600;color:var(--accent);background:var(--accent-l);padding:3px 9px;border-radius:7px;white-space:nowrap;">${a.salary.replace('/mo','')}</span>
+      <span style="font-size:11px;color:var(--text3);display:inline-flex;align-items:center;gap:4px;margin-left:auto;white-space:nowrap;">
+        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+        ${a.update}
+      </span>
+    </div>
+  </div>`;
+}
+
 function renderApps(){
-  const tb=document.getElementById('capps-tbody');if(!tb)return;
-  tb.innerHTML=applications.map(a=>`<tr style="border-bottom:1px solid var(--border);"><td style="padding:10px 8px;font-weight:500;">${a.role}</td><td style="padding:10px 8px;color:var(--text2);font-size:12px;">${a.company}</td><td style="padding:10px 8px;color:var(--text2);font-size:12px;">${a.applied}</td><td style="padding:10px 8px;"><span class="badge ${a.sc}">${a.status}</span></td><td style="padding:10px 8px;color:var(--text2);font-size:12px;">${a.update}</td><td style="padding:10px 8px;"><button class="btn-o btn-sm" onclick="openAppDetail('${a.id}')">View</button></td></tr>`).join('');
+  const board=document.getElementById('capps-board');if(!board)return;
+  board.innerHTML=KANBAN_COLS.map(col=>{
+    const items=applications.filter(a=>a.status===col.key);
+    const cards=items.length?items.map(kanCardHTML).join(''):`<div class="kan-empty">Drop here</div>`;
+    return `<div class="kan-col" data-status="${col.key}" ondragover="kanDragOver(event)" ondragleave="kanDragLeave(event)" ondrop="kanDrop(event,'${col.key}')">
+      <div class="kan-col-head"><span class="kan-dot" style="background:${col.dot};"></span><span class="kan-col-title">${col.label}</span><span class="kan-count">${items.length}</span></div>
+      <div class="kan-cards">${cards}</div>
+      <button class="kan-add" onclick="openAddApp('${col.key}')">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        Add
+      </button>
+    </div>`;
+  }).join('');
+  updateAppStats();
+}
+
+// ── Add application ──
+let addAppStage='Submitted';
+function openAddApp(stage){
+  addAppStage=stage;
+  const col=KANBAN_COLS.find(c=>c.key===stage);
+  document.getElementById('addapp-stage-label').textContent=col?col.label:'Applied';
+  ['addapp-role','addapp-company','addapp-loc','addapp-salary'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+  // populate company suggestions from known logos
+  const dl=document.getElementById('addapp-company-list');
+  if(dl)dl.innerHTML=Object.keys(logos).map(n=>`<option value="${n}"></option>`).join('');
+  document.getElementById('addapp-modal').style.display='flex';
+  setTimeout(()=>document.getElementById('addapp-role')?.focus(),60);
+}
+function closeAddApp(){document.getElementById('addapp-modal').style.display='none';}
+function submitAddApp(){
+  const role=document.getElementById('addapp-role').value.trim();
+  const company=document.getElementById('addapp-company').value.trim();
+  if(!role||!company){alert('Please enter at least a role and a company.');return;}
+  const loc=document.getElementById('addapp-loc').value.trim()||'—';
+  const salary=document.getElementById('addapp-salary').value.trim()||'Not disclosed';
+  const today=new Date().toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'});
+  const col=KANBAN_COLS.find(c=>c.key===addAppStage);
+  const id='A'+String(applications.length+1).padStart(3,'0')+'-'+Date.now().toString().slice(-4);
+  applications.push({
+    id,role,company,loc,salary,applied:today,status:addAppStage,sc:KAN_SC[addAppStage]||'b-navy',update:'just now',
+    timeline:[{date:today,event:`Added to ${col?col.label:'pipeline'}`,done:true,highlight:true}],
+    notes:'Added manually to your pipeline. Update the stage by dragging the card across the board.'
+  });
+  closeAddApp();
+  renderApps();
+}
+
+function updateAppStats(){
+  const n=k=>applications.filter(a=>a.status===k).length;
+  const set=(id,v)=>{const el=document.getElementById(id);if(el)el.textContent=v;};
+  set('apst-submitted',n('Submitted'));
+  set('apst-review',n('Under Review'));
+  set('apst-interview',n('Interview'));
+  set('apst-offer',n('Offer'));
+}
+
+function kanDragStart(e,id){kanDragId=id;e.currentTarget.classList.add('dragging');e.dataTransfer.effectAllowed='move';try{e.dataTransfer.setData('text/plain',id);}catch(_){}}
+function kanDragEnd(e){e.currentTarget.classList.remove('dragging');document.querySelectorAll('.kan-col.drag-over').forEach(c=>c.classList.remove('drag-over'));}
+function kanDragOver(e){e.preventDefault();e.currentTarget.classList.add('drag-over');e.dataTransfer.dropEffect='move';}
+function kanDragLeave(e){if(!e.currentTarget.contains(e.relatedTarget))e.currentTarget.classList.remove('drag-over');}
+function kanDrop(e,status){
+  e.preventDefault();
+  e.currentTarget.classList.remove('drag-over');
+  const a=applications.find(x=>x.id===kanDragId);
+  if(a&&a.status!==status){
+    a.status=status;
+    a.sc=KAN_SC[status]||'b-navy';
+    a.update='just now';
+    renderApps();
+  }
+  kanDragId=null;
 }
 function openAppDetail(id){
   const a=applications.find(x=>x.id===id);if(!a)return;
